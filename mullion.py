@@ -37,7 +37,7 @@ with st.sidebar.expander("📐 Geometría y Carga", expanded=True):
     L = st.number_input("Alto del Mullion (L) [mm]", value=3500.0, step=10.0)
     B = st.number_input("Ancho Tributario (B) [mm]", value=1500.0, step=10.0)
     q = st.number_input("Carga de Viento (q) [kgf/m²]", value=100.0, step=5.0)
-    e_vidrio = st.number_input("Espesor Cristal (e) [mm]", value=6.0)
+    e_vidrio = st.number_input("Espesor Vidrio (e) [mm]", value=6.0)
 
 # Lógica del criterio de deformación automática con unidades
 if L < 4115:
