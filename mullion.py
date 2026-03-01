@@ -44,7 +44,7 @@ if L < 4115:
     criterio_sugerido = "L/175"
     valor_df_sugerido = L / 175
 else:
-    criterio_sugerido = "L/240 + 6.35 mm" # Unidad añadida aquí
+    criterio_sugerido = "L/240 + 6.35 mm"
     valor_df_sugerido = (L / 240) + 6.35
 
 with st.sidebar.expander("📏 Criterio de Deformación Horizontal", expanded=True):
@@ -54,7 +54,8 @@ with st.sidebar.expander("📏 Criterio de Deformación Horizontal", expanded=Tr
 
 with st.sidebar.expander("🧪 Material y Distribución", expanded=True):
     material = st.selectbox("Material", 
-                           ["Aluminio 6063 - T6", "Aluminio 6063 - T5", "Acero A42-27ES"])
+                            ["Aluminio 6063 - T6", "Aluminio 6063 - T5", "Acero A42-27ES"])
+    # CORRECCIÓN: Nombres simplificados para coincidir con el motor de cálculo
     distribucion = st.radio("Distribución de Carga", 
                                ["Rectangular", "Trapezoidal"])
 
@@ -72,18 +73,19 @@ def calcular_requerimientos():
     L_m, B_m = L / 1000, B / 1000
     Df_m = df_admisible / 1000
 
-    # Momento Flector (M)
-    M = (1/8) * (q * B_m) * (L_m)**2
-
-    # Inercia Requerida (Ix) según distribución
-    if distribucion == "Rectangular (Simplificada)":
+    # Inercias y Módulos según distribución
+    # CORRECCIÓN: Comparación exacta con el valor del radio button
+    if distribucion == "Rectangular":
         I_req = (5 / 384) * q * B_m * L_m**4 / (E * Df_m)
+        M = (1/8) * (q * B_m) * (L_m)**2
         img_dist = "rect.jpg"
     else:
         # Ajuste Trapezoidal real
         ratio = B_m / (2 * L_m)
-        factor = (1 - (4/3) * (ratio**2))
-        I_req = ((5 / 384) * q * B_m * L_m**4 / (E * Df_m)) * factor
+        factor_i = (1 - (4/3) * (ratio**2))
+        factor_m = (1 - (2/3) * (ratio**2)) # Factor para Momento Flector
+        I_req = ((5 / 384) * q * B_m * L_m**4 / (E * Df_m)) * factor_i
+        M = ((1/8) * (q * B_m) * (L_m)**2) * factor_m
         img_dist = "trap.jpg"
 
     # Módulo Resistente (Sx)
@@ -113,16 +115,12 @@ col_fig, col_txt = st.columns([1, 1])
 
 with col_fig:
     st.markdown(f"**Modelo de Carga: {distribucion}**")
-    # Carga dinámica de imagen según selección
     if os.path.exists(imagen_a_cargar):
-        # Creamos dos sub-columnas iguales (50% cada una)
         sub_col1, sub_col2 = st.columns([1, 1])
         with sub_col1:
-            # La imagen se ajusta al 100% de la sub-columna (50% del total)
             st.image(imagen_a_cargar, use_column_width=True)
     else:
-        st.warning(f"💡 Archivo '{imagen_a_cargar}' no encontrado en el repositorio.")
-        
+        st.warning(f"💡 Archivo '{imagen_a_cargar}' no encontrado.")
 
 with col_txt:
     st.markdown(f"""
@@ -135,14 +133,14 @@ with col_txt:
             <li><strong>Inercia Req:</strong> {inercia:.2f} cm⁴</li>
         </ul>
         <hr>
-        <p><small>Nota: La inercia calculada con distribución trapezoidal es más eficiente para mullions con B/L < 1.</small></p>
+        <p><small>Nota: La inercia calculada con distribución {distribucion.lower()} es la base del diseño.</small></p>
     </div>
     """, unsafe_allow_html=True)
 
 # =================================================================
 # 5. GRÁFICO DE SENSIBILIDAD
 # =================================================================
-st.subheader("📈 Sensibilidad Ix vs Longitud")
+st.subheader(f"📈 Sensibilidad Ix vs Longitud ({distribucion})")
 L_axis = np.linspace(2000, 6000, 50)
 I_axis = []
 
@@ -150,7 +148,8 @@ for lx in L_axis:
     dfx = (lx / 175) if lx < 4115 else ((lx / 240) + 6.35)
     Ex = 7101002754 if material.startswith("Aluminio") else 21000000000
     
-    if distribucion == "Rectangular (Simplificada)":
+    # CORRECCIÓN: Comparación exacta en el bucle del gráfico
+    if distribucion == "Rectangular":
         ix = (5 / 384) * q * (B/1000) * (lx/1000)**4 / (Ex * (dfx/1000))
     else:
         r = (B/1000) / (2 * (lx/1000))
