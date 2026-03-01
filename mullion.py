@@ -6,9 +6,9 @@ import math
 import os
 
 # =================================================================
-# 1. CONFIGURACIÓN CORPORATIVA Y ESTILO
+# 1. CONFIGURACIÓN Y ESTILO
 # =================================================================
-st.set_page_config(page_title="AccuraWall 3.1 | Proyectos Estructurales", layout="wide")
+st.set_page_config(page_title="AccuraWall | Mauricio Riquelme", layout="wide")
 
 st.markdown("""
     <style>
@@ -21,159 +21,148 @@ st.markdown("""
         border-radius: 8px; 
         margin: 20px 0;
     }
-    .sidebar .sidebar-content { background-color: #f2f4f7; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏛️ AccuraWall 3.1: Prediseño de Mullions")
-st.markdown("#### **Análisis de Inercia y Flexo-compresión según ASD**")
+st.title("🏛️ AccuraWall: Prediseño de Mullions")
+st.markdown("#### **Criterio de Deflexión Automatizado L/175 - L/240 + 6.35mm**")
 st.divider()
 
 # =================================================================
-# 2. SIDEBAR: PARÁMETROS TÉCNICOS (Basados en tu código VB)
+# 2. SIDEBAR: PARÁMETROS TÉCNICOS
 # =================================================================
 st.sidebar.header("⚙️ Parámetros de Diseño")
 
 with st.sidebar.expander("📐 Geometría y Carga", expanded=True):
-    proyecto = st.text_input("Proyecto", value="IQ Apartments")
-    item_nom = st.text_input("Ítem", value="Mullion Frontal")
-    L = st.number_input("Largo Mullion (L) [mm]", value=3500.0)
-    B = st.number_input("Ancho Tributario (B) [mm]", value=1500.0)
-    q = st.number_input("Viento (q) [kgf/m²]", value=100.0)
-    e_vidrio = st.number_input("Espesor Cristal (mm)", value=6.0)
+    L = st.number_input("Alto del Mullion (L) [mm]", value=3500.0, step=10.0)
+    B = st.number_input("Ancho Tributario (B) [mm]", value=1500.0, step=10.0)
+    q = st.number_input("Carga de Viento (q) [kgf/m²]", value=100.0, step=5.0)
+    e_vidrio = st.number_input("Espesor Cristal (e) [mm]", value=6.0)
 
-with st.sidebar.expander("🧪 Material y Seguridad", expanded=True):
+# Lógica del criterio de deformación automática
+if L < 4115:
+    criterio_sugerido = f"L/175"
+    valor_df_sugerido = L / 175
+else:
+    criterio_sugerido = f"L/240 + 6.35"
+    valor_df_sugerido = (L / 240) + 6.35
+
+with st.sidebar.expander("📏 Criterio de Deformación", expanded=True):
+    st.markdown(f"**Sugerido por Norma:** `{criterio_sugerido}`")
+    # Casilla editable para la deflexión admisible
+    df_admisible = st.number_input("Deflexión Admisible [mm] (Editable)", 
+                                    value=float(valor_df_sugerido), 
+                                    help="Este valor se calcula automáticamente según L, pero puedes editarlo.")
+
+with st.sidebar.expander("🧪 Material", expanded=True):
     material = st.selectbox("Material", 
                            ["Aluminio 6063 - T6", "Aluminio 6063 - T5", "Acero A42-27ES"])
-    # Criterio de deflexión (L/175 o L/240)
-    criterio_d = st.selectbox("Criterio de Deflexión", ["L/175", "L/240", "19.05 mm (fijo)"])
-    esbeltez_max = st.number_input("Esbeltez Límite", value=300.0)
-
-distribucion = st.sidebar.radio("Distribución de Carga Tributaria", 
-                               ["Rectangular (Simplificada)", "Trapezoidal (Real)"],
-                               help="La carga trapezoidal considera la distribución real de esfuerzos según el ancho tributario.")
+    distribucion = st.radio("Distribución de Carga", 
+                               ["Rectangular (Simplificada)", "Trapezoidal (Real)"])
 
 # =================================================================
-# 3. MOTOR DE CÁLCULO REVISADO
+# 3. MOTOR DE CÁLCULO
 # =================================================================
-
-def calcular_mullion():
-    # Propiedades de Materiales (Valores exactos de tu VB)
+def calcular_requerimientos():
+    # Propiedades según tu código VB
     if material == "Aluminio 6063 - T6":
-        E_kgm2, Fcy_kgm2 = 7.101e9, 1.757e7
+        E, Fcy = 7101002754, 17576739.5
     elif material == "Aluminio 6063 - T5":
-        E_kgm2, Fcy_kgm2 = 7.101e9, 1.124e7
+        E, Fcy = 7101002754, 11249113.3
     else: # Acero
-        E_kgm2, Fcy_kgm2 = 2.1e10, 2.753e7
+        E, Fcy = 21000000000, 27532337.75
 
-    # Conversión a kgf y m para el cálculo interno
-    L_m, B_m = L / 1000, B / 1000
+    L_m = L / 1000
+    B_m = B / 1000
+    Df_m = df_admisible / 1000 # Usa el valor de la casilla editable
+
+    # Carga Axial (N)
+    N = (e_vidrio * B_m * L_m * 2500) / 1000**3 + (B_m * L_m * 5) / 1000**2 + (L_m * 20) / 1000
     
-    # 1. CARGA AXIAL (N) - Incluye peso propio estimado
-    N = (e_vidrio * B_m * L_m * 2500) / 1000 + (B_m * L_m * 5) + (L_m * 20)
+    # Momento Flector (M)
+    M = (1/8) * (q * B_m) * (L_m)**2
 
-    # 2. MOMENTO FLECTOR (M)
-    M = (1/8) * (q * B_m) * (L_m**2)
-
-    # 3. DEFLEXIÓN ADMISIBLE (Df)
-    if criterio_d == "L/175":
-        Df_m = L_m / 175
-    elif criterio_d == "L/240":
-        Df_m = L_m / 240
-    else:
-        Df_m = 19.05 / 1000
-
-    # 4. INERCIA REQUERIDA (Ix)
+    # Inercia Requerida (Ix)
     if distribucion == "Rectangular (Simplificada)":
-        # Fórmula estándar de viga simplemente apoyada con carga uniforme
-        I_req_m4 = (5/384) * (q * B_m * L_m**4) / (E_kgm2 * Df_m)
+        I_req = (5 / 384) * q * B_m * L_m**4 / (E * Df_m)
     else:
-        # LÓGICA TRAPEZOIDAL REVISADA
-        # Basada en el Boletín Técnico de Diseño Estructural
-        # Factor = (1 - 4/3 * (B/2L)^2)
+        # Ajuste Trapezoidal
         ratio = B_m / (2 * L_m)
-        factor_trapezoidal = (1 - (4/3) * (ratio**2))
-        I_req_m4 = ((5/384) * (q * B_m * L_m**4) / (E_kgm2 * Df_m)) * factor_trapezoidal
+        factor = (1 - (4/3) * (ratio**2))
+        I_req = ((5 / 384) * q * B_m * L_m**4 / (E * Df_m)) * factor
 
-    # 5. MÓDULO RESISTENTE (Sx)
-    # Según ASD (Tensión admisible = 0.6 * Fy)
-    Fb = 0.6 * Fcy_kgm2
-    S_req_m3 = M / Fb
+    # Módulo Resistente (Sx)
+    Fb = 0.6 * Fcy
+    S_req = M / Fb
 
-    return N, I_req_m4 * (100**4), S_req_m3 * (100**3)
+    return I_req * 100**4, S_req * 100**3
 
-axial, inercia, modulo = calcular_mullion()
+inercia, modulo = calcular_requerimientos()
 
 # =================================================================
 # 4. DESPLIEGUE DE RESULTADOS
 # =================================================================
-st.subheader(f"📊 Resultados de Prediseño: {item_nom}")
+st.subheader("📊 Requerimientos Mínimos de Sección")
 
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.metric("Inercia Mínima (Ix)", f"{inercia:.2f} cm⁴")
+    st.metric("Inercia (Ix)", f"{inercia:.2f} cm⁴")
 with c2:
-    st.metric("Módulo Resistente (Sx)", f"{modulo:.2f} cm³")
+    st.metric("Módulo (Sx)", f"{modulo:.2f} cm³")
 with c3:
-    st.metric("Carga Axial Est.", f"{axial:.2f} kgf")
+    st.metric("Límite Δ", f"{df_admisible:.2f} mm", delta=criterio_sugerido)
 
 
 
 st.markdown(f"""
 <div class="result-box">
     <h3>✅ Especificación Técnica:</h3>
-    <p>Proyecto: <strong>{proyecto}</strong> | Método: <strong>ASD</strong></p>
-    <hr>
     <ul>
-        <li><strong>Inercia Requerida:</strong> {inercia:.2f} cm⁴ (Gobernada por {criterio_d})</li>
-        <li><strong>Distribución:</strong> {distribucion}</li>
-        <li><strong>Material:</strong> {material}</li>
+        <li><strong>Longitud del elemento:</strong> {L} mm</li>
+        <li><strong>Criterio aplicado:</strong> {criterio_sugerido} (Deflexión máx: {df_admisible:.2f} mm)</li>
+        <li><strong>Inercia mínima requerida:</strong> {inercia:.2f} cm⁴</li>
+        <li><strong>Módulo resistente mínimo:</strong> {modulo:.2f} cm³</li>
     </ul>
-    <p><small>Nota: Los cálculos consideran apoyos simples en los extremos. Para mullions continuos, la inercia puede reducirse según análisis de vanos.</small></p>
+    <p><small>Nota: Se ha detectado automáticamente el umbral de 4115 mm para el cambio de criterio normativo.</small></p>
 </div>
 """, unsafe_allow_html=True)
 
 # =================================================================
-# 5. GRÁFICO DE COMPARACIÓN DE DISTRIBUCIÓN
+# 5. GRÁFICO DE SENSIBILIDAD
 # =================================================================
-st.subheader("📈 Comparativa de Métodos de Carga")
+st.subheader("📈 Comportamiento de Inercia vs Altura")
+L_axis = np.linspace(2000, 6000, 50)
+I_axis = []
 
-# Generar datos comparativos
-L_axis = np.linspace(2000, 5000, 30)
-I_rect = []
-I_trap = []
-
-for l_val in L_axis:
-    l_m = l_val / 1000
-    df_m = l_m / 175
-    E_val = 7.101e9 if material.startswith("Aluminio") else 2.1e10
+for lx in L_axis:
+    # Aplicar el cambio de criterio en la curva del gráfico
+    if lx < 4115:
+        dfx = lx / 175
+    else:
+        dfx = (lx / 240) + 6.35
     
-    # Rectangular
-    i_r = (5/384) * (q * (B/1000) * l_m**4) / (E_val * df_m)
-    I_rect.append(i_r * 100**4)
+    if material.startswith("Aluminio"):
+        E_x = 7101002754
+    else:
+        E_x = 21000000000
     
-    # Trapezoidal
-    ratio = (B/1000) / (2 * l_m)
-    i_t = i_r * (1 - (4/3)*(ratio**2))
-    I_trap.append(i_t * 100**4)
+    ix = (5 / 384) * q * (B/1000) * (lx/1000)**4 / (E_x * (dfx/1000))
+    I_axis.append(ix * 100**4)
 
 fig, ax = plt.subplots(figsize=(10, 4))
-ax.plot(L_axis, I_rect, color='#d9534f', ls='--', label='Distribución Rectangular (Conservadora)')
-ax.plot(L_axis, I_trap, color='#003366', lw=2, label='Distribución Trapezoidal (Real)')
-ax.scatter([L], [inercia], color='black', zorder=5)
-ax.set_xlabel("Largo del Mullion (mm)")
-ax.set_ylabel("Ix Requerida (cm⁴)")
-ax.set_title("Efecto del Área Tributaria en la Inercia")
+ax.plot(L_axis, I_axis, color='#003366', label='Ix Requerida (Curva Normativa)')
+ax.axvline(4115, color='red', ls='--', alpha=0.5, label='Umbral 4115mm')
+ax.scatter([L], [inercia], color='red', zorder=5)
+ax.set_xlabel("Longitud L (mm)")
+ax.set_ylabel("Ix (cm4)")
 ax.legend()
 ax.grid(True, alpha=0.3)
 st.pyplot(fig)
 
-# =================================================================
 # 6. CIERRE
-# =================================================================
 st.markdown("---")
 st.markdown(f"""
-    <div style="text-align: center; color: #666; font-size: 0.85em;">
+    <div style="text-align: center; color: #666; font-size: 0.8em;">
         <strong>Structural Lab | Mauricio Riquelme</strong><br>
         <em>"Programming is understanding"</em>
     </div>
