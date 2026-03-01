@@ -41,7 +41,7 @@ with st.sidebar.expander("📐 Geometría y Carga", expanded=True):
     q = st.number_input("Carga de Viento (q) [kgf/m²]", value=100.0, step=5.0)
     e_vidrio = st.number_input("Espesor Vidrio (e) [mm]", value=6.0)
 
-# Lógica del criterio de deformación automática
+# Lógica del criterio de deformación automática según NCh
 if L < 4115:
     criterio_sugerido = "L/175"
     valor_df_sugerido = L / 175
@@ -76,7 +76,7 @@ def calcular_requerimientos():
         M = (1/8) * (q * B_m) * (L_m)**2
         img_dist = "rect.jpg"
     else:
-        # Ajuste Trapezoidal real
+        # Ajuste Trapezoidal real para Mullions
         ratio = B_m / (2 * L_m)
         factor_i = (1 - (4/3) * (ratio**2))
         factor_m = (1 - (2/3) * (ratio**2))
@@ -132,7 +132,7 @@ def generar_pdf_mullion():
     pdf = FPDF()
     pdf.add_page()
     
-    # Encabezado con Logo
+    # Encabezado con Logo (si existe)
     if os.path.exists("Logo.png"):
         pdf.image("Logo.png", x=10, y=8, w=33)
     
@@ -163,8 +163,7 @@ def generar_pdf_mullion():
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
     
-    # Retornamos los bytes directamente
-    return pdf.output()
+    return pdf.output() # Eliminado .encode() para evitar error de bytes
 
 st.sidebar.markdown("---")
 if st.sidebar.button("📄 Preparar Reporte PDF"):
@@ -189,6 +188,7 @@ if st.sidebar.button("📄 Preparar Reporte PDF"):
 # 6. GRÁFICO DE SENSIBILIDAD
 # =================================================================
 st.subheader(f"📈 Sensibilidad Ix vs Longitud ({distribucion})")
+
 L_axis = np.linspace(2000, 6000, 50)
 I_axis = []
 for lx in L_axis:
