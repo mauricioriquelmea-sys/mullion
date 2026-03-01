@@ -126,128 +126,40 @@ with col_txt:
     """, unsafe_allow_html=True)
 
 # =================================================================
-# 5. GENERADOR DE PDF PROFESIONAL
+# 5. GENERADOR DE PDF PROFESIONAL (ESTILO PROYECTOS ESTRUCTURALES)
 # =================================================================
 def generar_pdf_mullion():
     pdf = FPDF()
     pdf.add_page()
-    
-    # Encabezado con Logo (si existe)
-    if os.path.exists("Logo.png"):
-        pdf.image("Logo.png", x=10, y=8, w=33)
-    
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Memoria de Calculo: Mullions", ln=True, align='C')
-    pdf.set_font("Arial", 'I', 10)
-    pdf.cell(0, 7, "Proyectos Estructurales | Structural Lab", ln=True, align='C')
+    if os.path.exists("Logo.png"): pdf.image("Logo.png", x=10, y=8, w=33)
+    pdf.set_font("Arial", 'B', 16); pdf.cell(0, 10, "Memoria de Calculo: Mullions", ln=True, align='C')
+    pdf.set_font("Arial", 'I', 10); pdf.cell(0, 7, "Proyectos Estructurales | Mauricio Riquelme", ln=True, align='C')
     pdf.ln(15)
-
-    # 1. Información del Diseño
-    pdf.set_fill_color(240, 240, 240)
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 10, " 1. INFORMACION DEL DISENO", ln=True, fill=True)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, f" Alto del Mullion (L): {L} mm", ln=True)
-    pdf.cell(0, 8, f" Ancho Tributario (B): {B} mm", ln=True)
-    pdf.cell(0, 8, f" Carga de Viento (q): {q} kgf/m2 | Distribucion: {distribucion}", ln=True)
-    pdf.ln(5)
-
-    # 2. Resultados Estructurales
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 10, " 2. RESULTADOS ESTRUCTURALES", ln=True, fill=True)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(95, 8, f" Inercia Ix Req: {inercia:.2f} cm4", border=0)
-    pdf.cell(95, 8, f" Modulo Sx Req: {modulo:.2f} cm3", ln=True)
-    pdf.cell(0, 8, f" Criterio de Deflexion: {criterio_sugerido} ({df_admisible:.2f} mm)", ln=True)
-    pdf.cell(0, 8, f" Material Especificado: {material}", ln=True)
     
-    # Pie de página técnico
-    pdf.set_y(-25)
-    pdf.set_font("Arial", 'I', 8)
-    pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
-    
+    # Datos y Resultados
+    pdf.set_fill_color(240, 240, 240); pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " 1. RESULTADOS DEL ANALISIS", ln=True, fill=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 8, f" Altura L: {L} mm | Ancho B: {B} mm | Viento q: {q} kgf/m2", ln=True)
+    pdf.cell(0, 8, f" Inercia Ix Req: {inercia:.2f} cm4 | Modulo Sx Req: {modulo:.2f} cm3", ln=True)
     return pdf.output()
 
-
-# =================================================================
-# 5.1 GENERADOR DE PDF PROFESIONAL (BOTÓN ESTILIZADO)
-# =================================================================
+# --- BOTÓN DE DESCARGA AZUL CORPORATIVO ---
 st.sidebar.markdown("---")
-
-# Función de generación (Asegúrate de que no tenga el .encode())
-def generar_pdf_mullion():
-    pdf = FPDF()
-    pdf.add_page()
-    if os.path.exists("Logo.png"):
-        pdf.image("Logo.png", x=10, y=8, w=33)
-    
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(0, 10, "Memoria de Calculo: Mullions", ln=True, align='C')
-    pdf.set_font("Arial", 'I', 10)
-    pdf.cell(0, 7, "Proyectos Estructurales | Structural Lab", ln=True, align='C')
-    pdf.ln(15)
-
-    # 1. Datos
-    pdf.set_fill_color(240, 240, 240)
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 10, " 1. INFORMACION DEL DISENO", ln=True, fill=True)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, f" L: {L} mm | B: {B} mm", ln=True)
-    pdf.cell(0, 8, f" Viento: {q} kgf/m2 | Material: {material}", ln=True)
-
-    # 2. Resultados
-    pdf.ln(5)
-    pdf.set_font("Arial", 'B', 11)
-    pdf.cell(0, 10, " 2. RESULTADOS ESTRUCTURALES", ln=True, fill=True)
-    pdf.set_font("Arial", '', 10)
-    pdf.cell(95, 8, f" Inercia Ix Req: {inercia:.2f} cm4", border=0)
-    pdf.cell(95, 8, f" Modulo Sx Req: {modulo:.2f} cm3", ln=True)
-    
-    pdf.set_y(-25)
-    pdf.set_font("Arial", 'I', 8)
-    pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
-    return pdf.output()
-
 try:
     pdf_bytes = generar_pdf_mullion()
     b64 = base64.b64encode(pdf_bytes).decode()
-    file_name = f"Memoria_Mullion_L{int(L)}.pdf"
-
-    # HTML del botón diseñado para verse igual al de Streamlit
-    # Usamos el azul corporativo #003366 para máxima elegancia
+    
     btn_html = f'''
-        <style>
-        .download-btn {{
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #003366;
-            color: white !important;
-            padding: 0.6rem 1rem;
-            width: 100%;
-            text-decoration: none;
-            border-radius: 8px;
-            border: 1px solid #002244;
-            font-weight: 500;
-            font-size: 1rem;
-            font-family: sans-serif;
-            transition: background-color 0.3s, box-shadow 0.3s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }}
-        .download-btn:hover {{
-            background-color: #004488;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }}
-        </style>
-        <a class="download-btn" href="data:application/pdf;base64,{b64}" download="{file_name}">
-            📥 DESCARGAR MEMORIA PDF
+        <a href="data:application/pdf;base64,{b64}" download="Memoria_Mullion.pdf" 
+           style="background-color: #003366; color: white; padding: 12px; text-decoration: none; 
+           border-radius: 8px; font-weight: bold; display: block; text-align: center; border: none;">
+           📥 DESCARGAR MEMORIA PDF
         </a>
     '''
     st.sidebar.markdown(btn_html, unsafe_allow_html=True)
-    
 except Exception as e:
-    st.sidebar.error(f"Error técnico en PDF: {e}")
-
+    st.sidebar.error(f"Error: {e}")
 
 # =================================================================
 # 6. GRÁFICO DE SENSIBILIDAD
