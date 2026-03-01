@@ -115,7 +115,11 @@ with col_fig:
     st.markdown(f"**Modelo de Carga: {distribucion}**")
     # Carga dinámica de imagen según selección
     if os.path.exists(imagen_a_cargar):
-        st.image(imagen_a_cargar, use_column_width=True)
+        # Creamos dos sub-columnas iguales (50% cada una)
+        sub_col1, sub_col2 = st.columns([1, 1])
+        with sub_col1:
+            # La imagen se ajusta al 100% de la sub-columna (50% del total)
+            st.image(imagen_a_cargar, use_column_width=True)
     else:
         st.warning(f"💡 Archivo '{imagen_a_cargar}' no encontrado en el repositorio.")
         
