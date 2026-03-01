@@ -121,19 +121,18 @@ with col_txt:
             <li><strong>Inercia Req:</strong> {inercia:.2f} cm⁴</li>
         </ul>
         <hr>
-        <p><small>Nota: La inercia calculada con distribución {distribucion.lower()} es la base del diseño.</small></p>
+        <p><small>Nota: La inercia calculada con distribución {distribucion.lower()} es la base del diseño profesional.</small></p>
     </div>
     """, unsafe_allow_html=True)
 
-
 # =================================================================
-# 5. GENERADOR DE PDF PROFESIONAL (VERSIÓN CORREGIDA)
+# 5. GENERADOR DE PDF PROFESIONAL
 # =================================================================
 def generar_pdf_mullion():
     pdf = FPDF()
     pdf.add_page()
     
-    # Encabezado con Logo (si existe en el servidor)
+    # Encabezado con Logo (si existe)
     if os.path.exists("Logo.png"):
         pdf.image("Logo.png", x=10, y=8, w=33)
     
@@ -167,17 +166,14 @@ def generar_pdf_mullion():
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
     
-    # IMPORTANTE: Retornamos bytes directamente para evitar error de encoding
     return pdf.output()
 
 st.sidebar.markdown("---")
 if st.sidebar.button("📄 Preparar Reporte PDF"):
     try:
         pdf_bytes = generar_pdf_mullion()
-        # Codificación Base64 para el navegador
         b64 = base64.b64encode(pdf_bytes).decode()
         
-        # Estilo del botón de descarga naranja (idéntico al del travesaño)
         btn_html = f'''
             <div style="text-align: center; margin-top: 10px;">
                 <a href="data:application/pdf;base64,{b64}" download="Memoria_Mullion_L{int(L)}mm.pdf" 
