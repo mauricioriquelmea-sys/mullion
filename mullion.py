@@ -168,46 +168,86 @@ def generar_pdf_mullion():
     
     return pdf.output()
 
+
+# =================================================================
+# 5.1 GENERADOR DE PDF PROFESIONAL (BOTÓN ESTILIZADO)
+# =================================================================
 st.sidebar.markdown("---")
 
-if st.sidebar.button("📄 Preparar Reporte PDF"):
-    try:
-        # Llamada a la función de generación
-        pdf_bytes = generar_pdf_mullion()
-        
-        # Codificación segura para el navegador
-        b64 = base64.b64encode(pdf_bytes).decode()
-        
-        # Nombre dinámico del archivo
-        file_name = f"Memoria_Mullion_L{int(L)}mm.pdf"
-        
-        # HTML del botón estilizado (Naranja con sombra y bordes)
-        btn_html = f'''
-            <div style="text-align: center; margin-top: 15px; margin-bottom: 10px;">
-                <a href="data:application/pdf;base64,{b64}" download="{file_name}" 
-                   style="
-                    background-color: #ff9900; 
-                    color: white; 
-                    padding: 14px 20px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: bold; 
-                    display: block; 
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
-                    border: 1px solid #e68a00;
-                    transition: 0.3s;
-                   ">
-                   📥 DESCARGAR REPORTE
-                </a>
-            </div>
-        '''
-        st.sidebar.markdown(btn_html, unsafe_allow_html=True)
-        st.sidebar.info("✅ El archivo está listo. Presiona el botón naranja arriba para descargar.")
+# Función de generación (Asegúrate de que no tenga el .encode())
+def generar_pdf_mullion():
+    pdf = FPDF()
+    pdf.add_page()
+    if os.path.exists("Logo.png"):
+        pdf.image("Logo.png", x=10, y=8, w=33)
+    
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, "Memoria de Calculo: Mullions", ln=True, align='C')
+    pdf.set_font("Arial", 'I', 10)
+    pdf.cell(0, 7, "Proyectos Estructurales | Structural Lab", ln=True, align='C')
+    pdf.ln(15)
 
-    except NameError as ne:
-        st.sidebar.error(f"❌ Error de variables: Asegúrate de que todos los cálculos se hayan ejecutado primero.")
-    except Exception as e:
-        st.sidebar.error(f"⚠️ Falla técnica al generar PDF: {e}")
+    # 1. Datos
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " 1. INFORMACION DEL DISENO", ln=True, fill=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(0, 8, f" L: {L} mm | B: {B} mm", ln=True)
+    pdf.cell(0, 8, f" Viento: {q} kgf/m2 | Material: {material}", ln=True)
+
+    # 2. Resultados
+    pdf.ln(5)
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(0, 10, " 2. RESULTADOS ESTRUCTURALES", ln=True, fill=True)
+    pdf.set_font("Arial", '', 10)
+    pdf.cell(95, 8, f" Inercia Ix Req: {inercia:.2f} cm4", border=0)
+    pdf.cell(95, 8, f" Modulo Sx Req: {modulo:.2f} cm3", ln=True)
+    
+    pdf.set_y(-25)
+    pdf.set_font("Arial", 'I', 8)
+    pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
+    return pdf.output()
+
+try:
+    pdf_bytes = generar_pdf_mullion()
+    b64 = base64.b64encode(pdf_bytes).decode()
+    file_name = f"Memoria_Mullion_L{int(L)}.pdf"
+
+    # HTML del botón diseñado para verse igual al de Streamlit
+    # Usamos el azul corporativo #003366 para máxima elegancia
+    btn_html = f'''
+        <style>
+        .download-btn {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #003366;
+            color: white !important;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid #002244;
+            font-weight: 500;
+            font-size: 1rem;
+            font-family: sans-serif;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }}
+        .download-btn:hover {{
+            background-color: #004488;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }}
+        </style>
+        <a class="download-btn" href="data:application/pdf;base64,{b64}" download="{file_name}">
+            📥 DESCARGAR MEMORIA PDF
+        </a>
+    '''
+    st.sidebar.markdown(btn_html, unsafe_allow_html=True)
+    
+except Exception as e:
+    st.sidebar.error(f"Error técnico en PDF: {e}")
+
 
 # =================================================================
 # 6. GRÁFICO DE SENSIBILIDAD
