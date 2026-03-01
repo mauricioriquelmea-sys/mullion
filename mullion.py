@@ -76,6 +76,7 @@ def calcular_requerimientos():
         M = (1/8) * (q * B_m) * (L_m)**2
         img_dist = "rect.jpg"
     else:
+        # Ajuste Trapezoidal real
         ratio = B_m / (2 * L_m)
         factor_i = (1 - (4/3) * (ratio**2))
         factor_m = (1 - (2/3) * (ratio**2))
@@ -119,6 +120,8 @@ with col_txt:
             <li><strong>Deflexión límite:</strong> {df_admisible:.2f} mm</li>
             <li><strong>Inercia Req:</strong> {inercia:.2f} cm⁴</li>
         </ul>
+        <hr>
+        <p><small>Nota: La inercia calculada con distribución {distribucion.lower()} es la base del diseño.</small></p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -128,6 +131,8 @@ with col_txt:
 def generar_pdf_mullion():
     pdf = FPDF()
     pdf.add_page()
+    
+    # Encabezado con Logo
     if os.path.exists("Logo.png"):
         pdf.image("Logo.png", x=10, y=8, w=33)
     
@@ -137,14 +142,16 @@ def generar_pdf_mullion():
     pdf.cell(0, 7, "Proyectos Estructurales | Structural Lab", ln=True, align='C')
     pdf.ln(15)
 
+    # 1. Información del Diseño
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, " 1. INFORMACION DEL DISENO", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, f" Alto del Mullion (L): {L} mm | Ancho Tributario (B): {B} mm", ln=True)
-    pdf.cell(0, 8, f" Carga Viento (q): {q} kgf/m2 | Distribucion: {distribucion}", ln=True)
+    pdf.cell(0, 8, f" Alto L: {L} mm | Ancho B: {B} mm", ln=True)
+    pdf.cell(0, 8, f" Viento q: {q} kgf/m2 | Distribucion: {distribucion}", ln=True)
     pdf.ln(5)
 
+    # 2. Resultados Estructurales
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, " 2. RESULTADOS ESTRUCTURALES", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
@@ -155,6 +162,8 @@ def generar_pdf_mullion():
     pdf.set_y(-25)
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
+    
+    # Retornamos los bytes directamente
     return pdf.output()
 
 st.sidebar.markdown("---")
@@ -172,7 +181,7 @@ if st.sidebar.button("📄 Preparar Reporte PDF"):
             </div>
         '''
         st.sidebar.markdown(btn_html, unsafe_allow_html=True)
-        st.sidebar.info("Archivo listo para descarga.")
+        st.sidebar.info("Archivo listo. Presione el botón naranja.")
     except Exception as e:
         st.sidebar.error(f"Error técnico: {e}")
 
