@@ -56,7 +56,7 @@ with st.sidebar.expander("🧪 Material y Distribución", expanded=True):
     material = st.selectbox("Material", 
                            ["Aluminio 6063 - T6", "Aluminio 6063 - T5", "Acero A42-27ES"])
     distribucion = st.radio("Distribución de Carga", 
-                               ["Rectangular (Simplificada)", "Trapezoidal"])
+                               ["Rectangular", "Trapezoidal"])
 
 # =================================================================
 # 3. MOTOR DE CÁLCULO
