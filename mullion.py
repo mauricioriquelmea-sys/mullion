@@ -169,24 +169,45 @@ def generar_pdf_mullion():
     return pdf.output()
 
 st.sidebar.markdown("---")
+
 if st.sidebar.button("📄 Preparar Reporte PDF"):
     try:
+        # Llamada a la función de generación
         pdf_bytes = generar_pdf_mullion()
+        
+        # Codificación segura para el navegador
         b64 = base64.b64encode(pdf_bytes).decode()
         
+        # Nombre dinámico del archivo
+        file_name = f"Memoria_Mullion_L{int(L)}mm.pdf"
+        
+        # HTML del botón estilizado (Naranja con sombra y bordes)
         btn_html = f'''
-            <div style="text-align: center; margin-top: 10px;">
-                <a href="data:application/pdf;base64,{b64}" download="Memoria_Mullion_L{int(L)}mm.pdf" 
-                   style="background-color: #ff9900; color: white; padding: 12px 20px; text-decoration: none; 
-                   border-radius: 5px; font-weight: bold; display: block;">
+            <div style="text-align: center; margin-top: 15px; margin-bottom: 10px;">
+                <a href="data:application/pdf;base64,{b64}" download="{file_name}" 
+                   style="
+                    background-color: #ff9900; 
+                    color: white; 
+                    padding: 14px 20px; 
+                    text-decoration: none; 
+                    border-radius: 8px; 
+                    font-weight: bold; 
+                    display: block; 
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+                    border: 1px solid #e68a00;
+                    transition: 0.3s;
+                   ">
                    📥 DESCARGAR REPORTE
                 </a>
             </div>
         '''
         st.sidebar.markdown(btn_html, unsafe_allow_html=True)
-        st.sidebar.info("El archivo está listo. Presiona el botón naranja arriba.")
+        st.sidebar.info("✅ El archivo está listo. Presiona el botón naranja arriba para descargar.")
+
+    except NameError as ne:
+        st.sidebar.error(f"❌ Error de variables: Asegúrate de que todos los cálculos se hayan ejecutado primero.")
     except Exception as e:
-        st.sidebar.error(f"Error técnico: {e}")
+        st.sidebar.error(f"⚠️ Falla técnica al generar PDF: {e}")
 
 # =================================================================
 # 6. GRÁFICO DE SENSIBILIDAD
