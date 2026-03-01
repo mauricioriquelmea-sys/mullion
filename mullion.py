@@ -24,7 +24,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏛️ AccuraWall: Prediseño de Mullions")
+st.title("🏛️ Prediseño de Mullions")
 st.markdown("#### **Control de Deflexión y Distribución de Carga Tributaria**")
 st.divider()
 
@@ -47,7 +47,7 @@ else:
     criterio_sugerido = "L/240 + 6.35 mm" # Unidad añadida aquí
     valor_df_sugerido = (L / 240) + 6.35
 
-with st.sidebar.expander("📏 Criterio de Deformación", expanded=True):
+with st.sidebar.expander("📏 Criterio de Deformación Horizontal", expanded=True):
     st.markdown(f"**Sugerido por Norma:** `{criterio_sugerido}`")
     df_admisible = st.number_input("Deflexión Admisible [mm] (Editable)", 
                                     value=float(valor_df_sugerido))
