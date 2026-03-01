@@ -84,7 +84,7 @@ def calcular_requerimientos():
         ratio = B_m / (2 * L_m)
         factor = (1 - (4/3) * (ratio**2))
         I_req = ((5 / 384) * q * B_m * L_m**4 / (E * Df_m)) * factor
-        img_dist = "tra.jpg"
+        img_dist = "trap.jpg"
 
     # Módulo Resistente (Sx)
     Fb = 0.6 * Fcy
