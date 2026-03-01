@@ -125,14 +125,15 @@ with col_txt:
     </div>
     """, unsafe_allow_html=True)
 
+
 # =================================================================
-# 5. GENERADOR DE PDF PROFESIONAL
+# 5. GENERADOR DE PDF PROFESIONAL (VERSIÓN CORREGIDA)
 # =================================================================
 def generar_pdf_mullion():
     pdf = FPDF()
     pdf.add_page()
     
-    # Encabezado con Logo (si existe)
+    # Encabezado con Logo (si existe en el servidor)
     if os.path.exists("Logo.png"):
         pdf.image("Logo.png", x=10, y=8, w=33)
     
@@ -147,32 +148,39 @@ def generar_pdf_mullion():
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, " 1. INFORMACION DEL DISENO", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, f" Alto L: {L} mm | Ancho B: {B} mm", ln=True)
-    pdf.cell(0, 8, f" Viento q: {q} kgf/m2 | Distribucion: {distribucion}", ln=True)
+    pdf.cell(0, 8, f" Alto del Mullion (L): {L} mm", ln=True)
+    pdf.cell(0, 8, f" Ancho Tributario (B): {B} mm", ln=True)
+    pdf.cell(0, 8, f" Carga de Viento (q): {q} kgf/m2 | Distribucion: {distribucion}", ln=True)
     pdf.ln(5)
 
     # 2. Resultados Estructurales
     pdf.set_font("Arial", 'B', 11)
     pdf.cell(0, 10, " 2. RESULTADOS ESTRUCTURALES", ln=True, fill=True)
     pdf.set_font("Arial", '', 10)
-    pdf.cell(0, 8, f" Inercia Ix Requerida: {inercia:.2f} cm4", ln=True)
-    pdf.cell(0, 8, f" Modulo Sx Requerido: {modulo:.2f} cm3", ln=True)
+    pdf.cell(95, 8, f" Inercia Ix Req: {inercia:.2f} cm4", border=0)
+    pdf.cell(95, 8, f" Modulo Sx Req: {modulo:.2f} cm3", ln=True)
     pdf.cell(0, 8, f" Criterio de Deflexion: {criterio_sugerido} ({df_admisible:.2f} mm)", ln=True)
+    pdf.cell(0, 8, f" Material Especificado: {material}", ln=True)
     
+    # Pie de página técnico
     pdf.set_y(-25)
     pdf.set_font("Arial", 'I', 8)
     pdf.cell(0, 10, "Memoria generada por AccuraWall Port - Mauricio Riquelme", align='C')
     
-    return pdf.output() # Eliminado .encode() para evitar error de bytes
+    # IMPORTANTE: Retornamos bytes directamente para evitar error de encoding
+    return pdf.output()
 
 st.sidebar.markdown("---")
 if st.sidebar.button("📄 Preparar Reporte PDF"):
     try:
         pdf_bytes = generar_pdf_mullion()
+        # Codificación Base64 para el navegador
         b64 = base64.b64encode(pdf_bytes).decode()
+        
+        # Estilo del botón de descarga naranja (idéntico al del travesaño)
         btn_html = f'''
             <div style="text-align: center; margin-top: 10px;">
-                <a href="data:application/pdf;base64,{b64}" download="Memoria_Mullion_L{int(L)}.pdf" 
+                <a href="data:application/pdf;base64,{b64}" download="Memoria_Mullion_L{int(L)}mm.pdf" 
                    style="background-color: #ff9900; color: white; padding: 12px 20px; text-decoration: none; 
                    border-radius: 5px; font-weight: bold; display: block;">
                    📥 DESCARGAR REPORTE
@@ -180,7 +188,7 @@ if st.sidebar.button("📄 Preparar Reporte PDF"):
             </div>
         '''
         st.sidebar.markdown(btn_html, unsafe_allow_html=True)
-        st.sidebar.info("Archivo listo. Presione el botón naranja.")
+        st.sidebar.info("El archivo está listo. Presiona el botón naranja arriba.")
     except Exception as e:
         st.sidebar.error(f"Error técnico: {e}")
 
